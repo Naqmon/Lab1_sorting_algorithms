@@ -1,8 +1,9 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<thread>
 #include<time.h>
 typedef unsigned long ul;
-ul g_random_seed = -2;
+ul g_random_seed = -10;
 ul my_rand() {
 	return g_random_seed = 69069LU*g_random_seed + 5LU;
 }
@@ -15,23 +16,23 @@ ul* random_array(ul n) {
 	return array;
 }
 void quick_sort(ul *array, ul n) {
-    ul left = 0;
-    ul right = n - 1;
+	if (n < 2) return;
+	ul left = 0;
+	ul right = n - 1;
+	ul mid = array[n >> 1];
 	ul temp;
-    ul mid = array[n >> 1];
-    do {
-		while (array[left++] < mid);
-		while (array[right--] > mid);
-        if (left <= right) {
-            temp = array[left];
-            array[left++] = array[right];
-            array[right--] = temp;
-        }
-    } while (left <= right);
-    if(right > 0) 
-        quick_sort(array, right+1);
-    if (left < n) 
-        quick_sort(array + left, n - left);
+	while (left < right) {
+		while (array[left] < mid) left++;
+		while (array[right] > mid) right--;
+		if (left <= right) {
+			temp = array[left];
+			array[left] = array[right];
+			array[right] = temp;
+			left++; right--;
+		}
+	}
+	quick_sort(array, right+1);
+	quick_sort(array + left, n - left);
 }
 void radix_sort(ul *array, ul n) {
 	const ul const basis = 256;
@@ -131,7 +132,7 @@ void heap_sort(ul* array, ul n) {
 
 }
 int main(){
-	ul n = 5000;
+	ul n = 10000000;
 	ul* array = random_array(n);
 	if (array == NULL) {
 		printf("Sasi lox\n");
@@ -147,8 +148,8 @@ int main(){
 	//bubble_sort(array, n);
 	//shell_sort(array, n);
 	quick_sort(array, n);
+	printf("\nTime = %f\n", (double)clock()-start);
 	for (ul i = 0; i < 10; i++)
 		printf("%u ", array[i]);
-	printf("Time = %f\n", (double)clock()-start);
 	return 0;
 }
