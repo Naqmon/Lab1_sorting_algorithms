@@ -1,19 +1,18 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<thread>
+#include<algorithm>
 #include<time.h>
 typedef unsigned long ul;
-ul g_random_seed = -10;
+ul threads = 0;
+ul g_random_seed = -100;
 ul my_rand() {
 	return g_random_seed = 69069LU*g_random_seed + 5LU;
 }
-ul* random_array(ul n) {
-	ul* array = (ul *)malloc(sizeof(ul)*n);
-	if (array == NULL) return NULL;
+void random_array(ul *array, ul n) {
 	for (ul i = 0; i < n; i++) {
 		array[i] = my_rand();
 	}
-	return array;
 }
 void quick_sort(ul *array, ul n) {
 	if (n < 2) return;
@@ -31,8 +30,33 @@ void quick_sort(ul *array, ul n) {
 			left++; right--;
 		}
 	}
-	quick_sort(array, right+1);
-	quick_sort(array + left, n - left);
+	std::thread t;
+	bool a = false, b = false;
+	if (threads < 8) {
+		t = std::thread(quick_sort, array, right + 1);
+		a = true;
+		threads++;
+	}
+	else {
+		quick_sort(array, right + 1);
+	}
+	std::thread t2;
+	if (threads < 8) {
+		t2 = std::thread(quick_sort, array + left, n - left);
+		b = true;
+		threads++;
+	}
+	else {
+		quick_sort(array + left, n - left);
+	}
+	if (a) {
+		t.join();
+		threads--;
+	}
+	if (b) {
+		t2.join();
+		threads--;
+	}
 }
 void radix_sort(ul *array, ul n) {
 	const ul const basis = 256;
@@ -59,8 +83,29 @@ void radix_sort(ul *array, ul n) {
 void merge_sort(ul *array, ul *buffer, ul n) {
 	if (n < 2) return;
 	ul mid = n >> 1;
-	merge_sort(array, buffer, mid);
-	merge_sort(array + mid, buffer, n - mid);
+	std::thread t;
+	bool a = false, b = false;
+	if (threads < 8) {
+		t = std::thread(merge_sort, array, buffer, mid);
+		a = true;
+		threads++;
+	}else
+		merge_sort(array, buffer, mid);
+	std::thread t2;
+	if (threads < 8) {
+		t2 = std::thread(merge_sort, array + mid, buffer, n - mid);
+		b = true;
+		threads++;
+	}else
+		merge_sort(array + mid, buffer, n - mid);
+	if (a) {
+		t.join();
+		threads--;
+	}
+	if (b) {
+		t2.join();
+		threads--;
+	}
 	ul left = 0, right = mid;
 	for (ul i = 0; i < n; i++) {
 		if (array[left] < array[right]) 
@@ -113,8 +158,13 @@ void selection_sort(ul *array, ul n) {
 		array[min_ind] = temp;
 	}
 }
-void tournament_sort(ul* array, ul n) {
-
+void tournament_sort(ul* array, const ul n) {
+	ul* winner = (ul*)malloc(sizeof(ul) * n);
+	ul* loser = (ul*)malloc(sizeof(ul) * n);
+	ul w_ind = 0, l_ind = 0;
+	ul tour[511];
+	for (ul i = 0; i < 256; i++)
+		tour[255 + i] = array[i];
 }
 void shell_sort(ul* array, ul n) {
 	ul temp;
@@ -129,26 +179,73 @@ void shell_sort(ul* array, ul n) {
 	}
 }
 void heap_sort(ul* array, ul n) {
-
+	ul temp;
+	n--;
+	for (ul i = n; i > 1; i--) {
+		if (array[i] > array[(i - 1) >> 1]) {
+			temp = array[i];
+			array[i] = array[(i - 1) >> 1];
+			array[(i - 1) >> 1] = temp;
+		}
+	}
+	temp = array[n];
+	array[n] = array[0];
+	array[0] = temp;
+	ul ind;
+	ul l, r;
+	while (n-- > 2) {
+		ind = 0;
+		l = 1; r = 2;
+		while (l <= n) {
+			if (l == n && array[ind] < array[l]) {
+				temp = array[ind];
+				array[ind] = array[l];
+				array[l] = temp;
+				ind = l;
+			}
+			else if (array[l] >= array[r] && array[ind] < array[l]) {
+				temp = array[ind];
+				array[ind] = array[l];
+				array[l] = temp;
+				ind = l;
+			}
+			else if (array[r] >= array[l] && array[ind] < array[r]) {
+				temp = array[ind];
+				array[ind] = array[r];
+				array[r] = temp;
+				ind = r;
+			}
+			else break;
+			l = (ind << 1) + 1;
+			r = l + 1;
+		}
+		temp = array[0];
+		array[0] = array[n];
+		array[n] = temp;
+	}
+	
 }
 int main(){
-	ul n = 10000000;
-	ul* array = random_array(n);
-	if (array == NULL) {
-		printf("Sasi lox\n");
+	ul n = 100000000;
+	ul* array = (ul*)malloc(sizeof(ul) * n);
+	if (array == NULL)
 		return 1;
-	}
+	random_array(array, n);
 	time_t start = clock();
-	/*ul* buffer = (ul*)malloc(sizeof(ul) * n);
-	if (buffer == NULL) {
-		printf("Sasi lox 2\n");
-		return 1;
-	}
-	merge_sort(array, buffer, n);*/
-	//bubble_sort(array, n);
+    /*ul* buffer = (ul*)malloc(sizeof(ul) * n);
+	if (buffer == NULL)
+		return 1;*/
+	//std::sort(array, array+n);
+	//heap_sort(array, n);
+	//radix_sort(array, n);
 	//shell_sort(array, n);
-	quick_sort(array, n);
-	printf("\nTime = %f\n", (double)clock()-start);
+	//quick_sort(array, n);
+	//bubble_sort(array, n);
+	//insert_sort(array, n);
+	//selection_sort(array, n);
+	//tournament_sort(array, n);
+	//merge_sort(array, buffer, n);
+	printf("\nTime = %f\n", (double)clock() - (double)start);
 	for (ul i = 0; i < 10; i++)
 		printf("%u ", array[i]);
 	return 0;
