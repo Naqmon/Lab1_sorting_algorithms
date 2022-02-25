@@ -9,6 +9,19 @@ ul g_random_seed = -100;
 ul my_rand() {
 	return g_random_seed = 69069LU*g_random_seed + 5LU;
 }
+void swap_array(ul* array, ul n) {
+	for (ul i = 0; i < n; i++) {
+		array[i] = i;
+	}
+	ul a, b, temp;
+	for (ul i = 0; i < n >> 16; i++) {
+		a = my_rand() % n;
+		b = my_rand() % n;
+		temp = array[a];
+		array[a] = array[b];
+		array[b] = temp;
+	}
+}
 void random_array(ul *array, ul n) {
 	for (ul i = 0; i < n; i++) {
 		array[i] = my_rand();
@@ -225,13 +238,13 @@ void heap_sort(ul* array, ul n) {
 	}
 	
 }
-int main(){
+int main(int args, char **argv){
 	ul n = 100000000;
 	ul* array = (ul*)malloc(sizeof(ul) * n);
 	if (array == NULL)
 		return 1;
 	random_array(array, n);
-	time_t start = clock();
+	clock_t start = clock();
     /*ul* buffer = (ul*)malloc(sizeof(ul) * n);
 	if (buffer == NULL)
 		return 1;*/
@@ -245,7 +258,7 @@ int main(){
 	//selection_sort(array, n);
 	//tournament_sort(array, n);
 	//merge_sort(array, buffer, n);
-	printf("\nTime = %f\n", (double)clock() - (double)start);
+	printf("\nTime = %d\n", clock() - start);
 	for (ul i = 0; i < 10; i++)
 		printf("%u ", array[i]);
 	return 0;
